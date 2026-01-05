@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔎</text></svg>"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+    <title>DSA Search Engine</title>
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <h2>🔍 DSA Search</h2>
+
+      <div class="nav-right">
+        <span class="badge">TF-IDF Powered</span>
+        <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+          🌙
+        </button>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Search 3500+ DSA Problems in Seconds</h1>
+
+        <p class="tagline">
+          Instantly find coding challenges across
+          <img src="assets/logos/codeforces.png" class="platform-icon" />
+          <img src="assets/logos/codechef.png" class="platform-icon" />
+          <img src="assets/logos/leetcode.png" class="platform-icon" />
+          — all in one place.
+        </p>
+
+        <form class="search-form" id="search-form">
+          <input
+            id="query-input"
+            class="query-input"
+            type="text"
+            placeholder="Search by topic, title, or keyword…"
+            autocomplete="off"
+          />
+          <button type="submit">Search</button>
+        </form>
+
+        <p class="cta">
+          Try searching: <strong>binary search</strong>, <strong>matrix</strong>, <strong>dp</strong>
+        </p>
+
+        <div id="spinner" class="spinner hidden"></div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+      <div class="feature-card">⚡ Fast TF-IDF Ranking</div>
+      <div class="feature-card">📚 3500+ Curated Problems</div>
+      <div class="feature-card">🌐 LeetCode & Codeforces</div>
+    </section>
+
+    <!-- RESULTS -->
+    <main class="results-container" id="results-section">
+      <div id="results" class="results"></div>
+    </main>
+
+    <footer class="footer">
+      <p>Built with ❤️ using NLP & TF-IDF</p>
+    </footer>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
