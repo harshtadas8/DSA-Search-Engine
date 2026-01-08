@@ -1,5 +1,7 @@
 import express from "express";
 import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 import pkg from "natural";
 
 import preprocess from "./utils/preprocess.js";
@@ -9,9 +11,17 @@ const { TfIdf } = pkg;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use(express.static("."));
+// --- Fix __dirname for ES modules ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+// --- Middleware ---
+app.use(express.json());
+
+// Serve frontend files (index.html, styles.css, script.js, assets, etc.)
+app.use(express.static(__dirname));
+
+// --- Search Engine Data ---
 let problems = [];
 let tfidf = new TfIdf();
 
@@ -20,9 +30,12 @@ let docVectors = [];
 let docMagnitudes = [];
 
 async function loadProblemsAndBuildIndex() {
-  const data = await fs.readFile("./corpus/all_problems.json", "utf-8");
-  problems = JSON.parse(data);
+  const data = await fs.readFile(
+    path.join(__dirname, "corpus/all_problems.json"),
+    "utf-8"
+  );
 
+  problems = JSON.parse(data);
   tfidf = new TfIdf();
 
   // Add documents: title boosted by duplicating, plus description
@@ -36,6 +49,7 @@ async function loadProblemsAndBuildIndex() {
   // Build document vectors and magnitudes for cosine similarity
   docVectors = [];
   docMagnitudes = [];
+
   problems.forEach((_, idx) => {
     const vector = {};
     let sumSquares = 0;
@@ -50,18 +64,17 @@ async function loadProblemsAndBuildIndex() {
   });
 }
 
-app.post("/search", async (req, res) => {
+// --- Search API ---
+app.post("/search", (req, res) => {
   const rawQuery = req.body.query;
 
   if (!rawQuery || typeof rawQuery !== "string") {
     return res.status(400).json({ error: "Missing or invalid 'query'" });
   }
 
-  // Preprocess query and tokenize
   const query = preprocess(rawQuery);
   const tokens = query.split(" ").filter(Boolean);
 
-  // Build the query TF×IDF vector
   const termFreq = {};
   tokens.forEach((t) => {
     termFreq[t] = (termFreq[t] || 0) + 1;
@@ -70,6 +83,7 @@ app.post("/search", async (req, res) => {
   const queryVector = {};
   let sumSqQ = 0;
   const N = tokens.length;
+
   Object.entries(termFreq).forEach(([term, count]) => {
     const tf = count / N;
     const idf = tfidf.idf(term);
@@ -77,9 +91,9 @@ app.post("/search", async (req, res) => {
     queryVector[term] = w;
     sumSqQ += w * w;
   });
+
   const queryMag = Math.sqrt(sumSqQ) || 1;
 
-  // Compute cosine similarity against each document
   const scores = problems.map((_, idx) => {
     const docVec = docVectors[idx];
     const docMag = docMagnitudes[idx] || 1;
@@ -91,11 +105,9 @@ app.post("/search", async (req, res) => {
       }
     }
 
-    const cosine = dot / (queryMag * docMag);
-    return { idx, score: cosine };
+    return { idx, score: dot / (queryMag * docMag) };
   });
 
-  // Take top 10 non-zero scores
   const top = scores
     .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -111,8 +123,9 @@ app.post("/search", async (req, res) => {
   res.json({ results: top });
 });
 
+// --- Start Server ---
 loadProblemsAndBuildIndex().then(() => {
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`✅ Server running on port ${PORT}`);
   });
 });
